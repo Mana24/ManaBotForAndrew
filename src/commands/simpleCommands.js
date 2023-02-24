@@ -13,6 +13,5 @@ function SayHi({ user, words, msg }) {
 export default [
    // [CommandName in lowerCase, command function]
    ["sayhi", SayHi],
-   ["opencockpit", ({user}) => `I'm sorry @${user}, I'm afraid I can't do that :)`],
-   ["leaderboard", ({user}) => `@${user}, Check the lembit leaderboard at streamelements.com/serboggit/leaderboard`],
+   ["opencockpit", ({user}) => `I'm sorry @${user}, I'm afraid I can't do that :)`]
 ]

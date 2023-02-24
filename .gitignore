@@ -1,5 +1,6 @@
 /node_modules
 quotes.*
 tokens.json
+trainers.*
 .env
 /storage

@@ -3,17 +3,14 @@ import * as dotenv from 'dotenv'
 import { RefreshingAuthProvider } from '@twurple/auth';
 import { ChatClient } from '@twurple/chat';
 import { promises as fs } from 'fs';
-import QuoteRepo from './QuoteRepo.js';
-import { RedeemWatcher } from './RedeemWatcher.js';
+import QuoteRepo from './repos/QuoteRepo.js';
 import path from 'path';
 import storage from 'node-persist'
-import { fileURLToPath } from 'url';
-import { getSecondaryCommand, isModOrBroadcaster } from './utils.js';
+import { getSecondaryCommand, isModOrBroadcaster, __dirname } from './utils.js';
 import simpleCommands from './commands/simpleCommands.js';
-import streakCommands, { getStreaks } from './commands/streakCommands.js';
+import pokemonCommands from './commands/pokemonCommands.js';
 
 // CURRENT SCOPES: channel:moderate chat:edit chat:read channel:read:redemptions
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const tokenPath = path.join(__dirname, "../tokens.json");
@@ -24,18 +21,18 @@ const quoteRepo = new QuoteRepo(quotePath, true);
 const storagePath = path.join(__dirname, '../storage');
 
 const commandSymbol = '!';
-const commands = new Map(simpleCommands.concat(streakCommands)); // Initialize the commands map with simple commands
+const commands = new Map(simpleCommands.concat(pokemonCommands)); // Initialize the commands map with simple commands
 
-const channels = ['mana248', 'serboggit'];
+const channels = ['mana248'];
 
-async function handleCommand({ channel, user, text, msg }) {
+async function handleCommand({ channel, user, text, msg, displayName }) {
 	const words = text.trim().split(/\s+/);
 	const command = words[0].substring(commandSymbol.length).toLowerCase();
 
 	if (!commands.has(command)) return;
 
 	const commandHandler = commands.get(command);
-	const responseToUser = await commandHandler({ channel, user, text, msg, words });
+	const responseToUser = await commandHandler({ channel, user, text, msg, words, displayName });
 
 	return responseToUser;
 }
@@ -134,21 +131,6 @@ async function handleQuoteCommand({ channel, user, text, msg, words }) {
 	}
 }
 
-async function handleFirst(user) {
-	let streaks = await getStreaks();
-	let streak = streaks[streaks.length - 1]
-	if (streak?.holder !== user.toLowerCase()) {
-		streak = { holder: user.toLowerCase(), count: 1 };
-		streaks.push(streak);
-	} else {
-		streak.count = streak.count + 1;
-	}
-	await storage.set('streaks', streaks);
-
-	// return `You're on a streak of ${streak.count}`;
-	return `!addpoints ${user} 1000 You're on a streak of ${streak.count}`;
-}
-
 async function main() {
 	const categories = Object.keys(await quoteRepo.getAll())
 	categories.forEach(category => { commands.set(category, handleQuoteCommand) });
@@ -172,19 +154,10 @@ async function main() {
 
 	console.log("Connected to chat successfully!");
 
-	const hardCodedChannel = 'serboggit'
-	new RedeemWatcher(hardCodedChannel).addRedeemListener(async (user, redeemInfo) => {
-		if (redeemInfo.redeemTitle.toLowerCase() === "first") {
-			// Determine streak info
-
-			chatClient.say(hardCodedChannel, await handleFirst(user));
-		}
-	})
-
 	chatClient.onMessage(async (channel, user, text, msg) => {
 		//console.log(text)
 		if (text.startsWith(commandSymbol)) {
-			const response = await handleCommand({ channel, user, text, msg });
+			const response = await handleCommand({ channel, user, text, msg, displayName: msg.userInfo.displayName });
 			if (response) {
 				chatClient.say(channel, response);
 			}
