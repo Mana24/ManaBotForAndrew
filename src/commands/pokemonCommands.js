@@ -3,7 +3,7 @@ import Pokemon from "../pokemonSystem/Pokemon.js";
 import Trainer from "../pokemonSystem/Trainer.js";
 import TrainerRepo from "../repos/TrainerRepo.js";
 import { cooldownCommand } from "../userCooldown.js";
-import { debounce, __dirname, choose, getSecondaryCommand, removeAtSymbol } from "../utils.js";
+import { __dirname, choose, getSecondaryCommand, removeAtSymbol } from "../utils.js";
 
 const trainerPath = path.join(__dirname, "../trainers.json");
 const trainerRepo = new TrainerRepo(trainerPath, true);
@@ -196,9 +196,9 @@ async function handleFeedCooldown({user, displayName}) {
 export default [
    // [CommandName in lowerCase, command function]
    ["catch", cooldownCommand(handleCatch, handleCatchCooldown, activityCooldown, "catch")],
-   ["pinfo", debounce(globalCooldown, handleInfo)],
-   ["pstats", debounce(globalCooldown, handleStats)],
-   ["pname", debounce(globalCooldown, handleName)],
+   ["pinfo", handleInfo],
+   ["pstats", handleStats],
+   ["pname", handleName],
    ["pbattle", cooldownCommand(handleBattle, handleBattleCooldown, activityCooldown, "pbattle")],
    ["pwalk", cooldownCommand(handleWalk, handleWalkCooldown, activityCooldown, "pwalk")],
    ["pfeed", cooldownCommand(handleFeed, handleFeedCooldown, activityCooldown, "pfeed")]
