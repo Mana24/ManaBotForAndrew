@@ -2,7 +2,7 @@ import path from "path";
 import Pokemon from "../pokemonSystem/Pokemon.js";
 import Trainer from "../pokemonSystem/Trainer.js";
 import TrainerRepo from "../repos/TrainerRepo.js";
-import { basicCooldownHandler, cooldownCommand } from "../userCooldown.js";
+import { cooldownCommand } from "../userCooldown.js";
 import { debounce, __dirname, choose, getSecondaryCommand, removeAtSymbol } from "../utils.js";
 
 const trainerPath = path.join(__dirname, "../trainers.json");
@@ -98,10 +98,11 @@ async function handleName({ user, words, displayName }) {
    return `${displayName}, Congratulations on naming your new Pokemon ${name}. A name to remember`
 }
 
-async function handleBattle({ user, words, displayName }) {
+async function handleBattle({ user, words, displayName }, disableCooldown) {
    // Check if user has a pokemon
    const trainer = await trainerRepo.getTrainer(user);
    if (!trainer || trainer.pokemons.length === 0) {
+      disableCooldown?.call();
       return noPokemonMessage(displayName);
    }
    const firstPokemon = Trainer.latestPokemon(trainer);
@@ -148,9 +149,10 @@ function handleBattleCooldown({displayName}) {
    return `@${displayName} Your Pokemon is too tired to fight right now! Give them a short rest and try again in a short while!`
 }
 
-async function handleWalk({user, displayName}) {
+async function handleWalk({user, displayName}, disableCooldown) {
    const trainer = await trainerRepo.getTrainer(user);
    if (!trainer || trainer.pokemons.length === 0) {
+      disableCooldown?.call();
       return noPokemonMessage(displayName);
    }
    const pokemon = Trainer.latestPokemon(trainer);
@@ -160,7 +162,7 @@ async function handleWalk({user, displayName}) {
       return `${displayName} takes ${pokemon.name || 'their ' + pokemon.type} on a walk! It looks like ${pokemonPronoun} has to go! Ah, that was a nice ${Math.random() > 0.5 ? 'poop' : 'pee'}! Good ${pokemon.gender}, ${pokemon.name || pokemon.type}!`;
    }
    else {
-      return `${displayName} takes ${pokemon.name || 'their ' + pokemon.type} on a walk! It doesn't look like he/she has to go potty yet! Good ${pokemon.gender}, ${pokemon.name || pokemon.type}!`
+      return `${displayName} takes ${pokemon.name || 'their ' + pokemon.type} on a walk! It doesn't look like ${pokemonPronoun} has to go potty yet! Good ${pokemon.gender}, ${pokemon.name || pokemon.type}!`
    }
 }
 
@@ -168,15 +170,16 @@ function handleWalkCooldown({displayName}) {
    return `@${displayName} Your Pokemon wants to snuggle with you instead of walking! Maybe try walking them later!`;
 }
 
-async function handleFeed({user, displayName}) {
+async function handleFeed({user, displayName}, disableCooldown) {
    const trainer = await trainerRepo.getTrainer(user);
    if (!trainer || trainer.pokemons.length === 0) {
+      disableCooldown?.call();
       return noPokemonMessage(displayName);
    }
    const pokemon = Trainer.latestPokemon(trainer);
    const pokemonPronoun = pokemon.gender === "boy" ? 'He' : 'She';
 
-   return `${displayName} feeds ${pokemon.name || 'their ' + pokemon.type}! ${pokemon.name || pokemon.pokemonPronoun} gobbled up the treat! Good ${pokemon.gender}!`
+   return `${displayName} feeds ${pokemon.name || 'their ' + pokemon.type}! ${pokemon.name || pokemonPronoun} gobbled up the treat! Good ${pokemon.gender}!`
 }
 
 async function handleFeedCooldown({user, displayName}) {
@@ -187,7 +190,7 @@ async function handleFeedCooldown({user, displayName}) {
    const pokemon = Trainer.latestPokemon(trainer);
    const pokemonPronoun = pokemon.gender === "boy" ? 'He' : 'She';
 
-   return `@${displayName} Oof! Your Pokemon is stuffed! He/she is ignoring the treat! ${pokemonPronoun} is ignoring the treat!`
+   return `@${displayName} Oof! Your Pokemon is stuffed! ${pokemonPronoun} is ignoring the treat!`
 }
 
 export default [

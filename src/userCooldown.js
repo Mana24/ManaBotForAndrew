@@ -8,10 +8,15 @@ export function cooldownCommand(commandHandler, cooldownHandler = () => undefine
    return async function (args) {
       const commandUsers = commands.get(commandKey);
       const lastcalled = commandUsers.get(args.user);
+      let cooldownDisabled = false;
+      const cooldownDisabler = () => cooldownDisabled = true;
       const now = Date.now()
       if (!lastcalled) {
+         const commandReturn = await commandHandler(args, cooldownDisabler);
+         if (!cooldownDisabled) {
          commandUsers.set(args.user, now);
-         return await commandHandler(args);
+         }
+         return commandReturn;
       }
       else if((lastcalled + cooldown) > now) {
          const cooldownData = {
