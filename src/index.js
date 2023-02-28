@@ -23,7 +23,7 @@ const storagePath = path.join(__dirname, '../storage');
 const commandSymbol = '!';
 const commands = new Map(simpleCommands.concat(pokemonCommands)); // Initialize the commands map with simple commands
 
-const channels = ['mana248'];
+const channels = ['kungfuandrew'];
 
 async function handleCommand({ channel, user, text, msg, displayName }) {
 	const words = text.trim().split(/\s+/);

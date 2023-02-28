@@ -13,5 +13,5 @@ function SayHi({ user, words, msg }) {
 export default [
    // [CommandName in lowerCase, command function]
    ["sayhi", SayHi],
-   ["opencockpit", ({user}) => `I'm sorry @${user}, I'm afraid I can't do that :)`]
+   ["opencockpit", ({displayName}) => `I'm sorry @${displayName}, I'm afraid I can't do that :)`]
 ]
