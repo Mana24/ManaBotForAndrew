@@ -7,7 +7,7 @@ function SayHi({ user, words, msg }) {
       if (!words[2]) return `@${user}, Who should I say hi to?`
       userToGreet = removeAtSymbol(words[2]);
    }
-   return `Hi @${userToGreet}, I am ManaBot :) I do things smileW`
+   return `Hi @${userToGreet}, I am ManaBot :) I do things :)`
 }
 
 export default [
