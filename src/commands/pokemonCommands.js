@@ -2,12 +2,14 @@ import path from "path";
 import Pokemon from "../pokemonSystem/Pokemon.js";
 import Trainer from "../pokemonSystem/Trainer.js";
 import TrainerRepo from "../repos/TrainerRepo.js";
+import { basicCooldownHandler, cooldownCommand } from "../userCooldown.js";
 import { debounce, __dirname, choose, getSecondaryCommand, removeAtSymbol } from "../utils.js";
 
 const trainerPath = path.join(__dirname, "../trainers.json");
 const trainerRepo = new TrainerRepo(trainerPath, true);
 
 const globalCooldown = 2000; // ms
+const activityCooldown = 1000 * 60 * 20; // 20 mins
 
 const catchChance = 0.65;
 const catchAttemptMessage = (pokename, displayName) =>
@@ -37,6 +39,10 @@ async function handleCatch({ user, displayName }) {
       catchAttemptMessage(pokemon, displayName) +
       "Heck yeah! You caught the wild Pokemon!"
    );
+}
+
+function handleCatchCooldown({displayName}) {
+   return `@${displayName} You didn't see any Pokemon while searching in the tall grass, try again in a short while!`
 }
 
 async function handleInfo({ user, displayName }) {
@@ -138,11 +144,59 @@ async function handleBattle({ user, words, displayName }) {
    return `${won ? wonMessage : lostMessage} ${didLevel ? levelMessage : ''}`
 }
 
+function handleBattleCooldown({displayName}) {
+   return `@${displayName} Your Pokemon is too tired to fight right now! Give them a short rest and try again in a short while!`
+}
+
+async function handleWalk({user, displayName}) {
+   const trainer = await trainerRepo.getTrainer(user);
+   if (!trainer || trainer.pokemons.length === 0) {
+      return noPokemonMessage(displayName);
+   }
+   const pokemon = Trainer.latestPokemon(trainer);
+   const pokemonPronoun = pokemon.gender === "boy" ? 'he' : 'she';
+   
+   if (Math.random() > 0.5) {
+      return `${displayName} takes ${pokemon.name || 'their ' + pokemon.type} on a walk! It looks like ${pokemonPronoun} has to go! Ah, that was a nice ${Math.random() > 0.5 ? 'poop' : 'pee'}! Good ${pokemon.gender}, ${pokemon.name || pokemon.type}!`;
+   }
+   else {
+      return `${displayName} takes ${pokemon.name || 'their ' + pokemon.type} on a walk! It doesn't look like he/she has to go potty yet! Good ${pokemon.gender}, ${pokemon.name || pokemon.type}!`
+   }
+}
+
+function handleWalkCooldown({displayName}) {
+   return `@${displayName} Your Pokemon wants to snuggle with you instead of walking! Maybe try walking them later!`;
+}
+
+async function handleFeed({user, displayName}) {
+   const trainer = await trainerRepo.getTrainer(user);
+   if (!trainer || trainer.pokemons.length === 0) {
+      return noPokemonMessage(displayName);
+   }
+   const pokemon = Trainer.latestPokemon(trainer);
+   const pokemonPronoun = pokemon.gender === "boy" ? 'He' : 'She';
+
+   return `${displayName} feeds ${pokemon.name || 'their ' + pokemon.type}! ${pokemon.name || pokemon.pokemonPronoun} gobbled up the treat! Good ${pokemon.gender}!`
+}
+
+async function handleFeedCooldown({user, displayName}) {
+   const trainer = await trainerRepo.getTrainer(user);
+   if (!trainer || trainer.pokemons.length === 0) {
+      return noPokemonMessage(displayName);
+   }
+   const pokemon = Trainer.latestPokemon(trainer);
+   const pokemonPronoun = pokemon.gender === "boy" ? 'He' : 'She';
+
+   return `@${displayName} Oof! Your Pokemon is stuffed! He/she is ignoring the treat! ${pokemonPronoun} is ignoring the treat!`
+}
+
 export default [
    // [CommandName in lowerCase, command function]
-   ["catch", debounce(globalCooldown, handleCatch)],
+   ["catch", cooldownCommand(handleCatch, handleCatchCooldown, activityCooldown, "catch")],
    ["pinfo", debounce(globalCooldown, handleInfo)],
    ["pstats", debounce(globalCooldown, handleStats)],
    ["pname", debounce(globalCooldown, handleName)],
-   ["pokebattle", debounce(globalCooldown, handleBattle)]
+   ["pbattle", cooldownCommand(handleBattle, handleBattleCooldown, activityCooldown, "pbattle")],
+   ["pwalk", cooldownCommand(handleWalk, handleWalkCooldown, activityCooldown, "pwalk")],
+   ["pfeed", cooldownCommand(handleFeed, handleFeedCooldown, activityCooldown, "pfeed")]
 ];
