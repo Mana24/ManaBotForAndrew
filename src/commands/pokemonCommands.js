@@ -195,7 +195,7 @@ async function handleFeedCooldown({user, displayName}) {
 
 export default [
    // [CommandName in lowerCase, command function]
-   ["catch", cooldownCommand(handleCatch, handleCatchCooldown, activityCooldown, "catch")],
+   ["catch", cooldownCommand(handleCatch, handleCatchCooldown, 5 * 1000 * 60, "catch")],
    ["pinfo", handleInfo],
    ["pstats", handleStats],
    ["pname", handleName],
